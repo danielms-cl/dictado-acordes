@@ -1,962 +1,788 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Práctica Auditiva — Dictado de acordes</title>
-  <style>
-    :root {
-      --bg: #0f1220;
-      --card: #1e2240;
-      --card-2: #262b52;
-      --text: #eef0ff;
-      --muted: #9aa0c7;
-      --primary: #6c7bff;
-      --primary-2: #8a97ff;
-      --success: #2ecc71;
-      --error: #ff5c5c;
-      --warning: #ffb84d;
-      --border: #333a68;
-      --shadow: 0 8px 24px rgba(0, 0, 0, .35);
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Práctica Auditiva — Dictado de acordes</title>
+<style>
+  :root {
+    --bg: #0f1220;
+    --card: #1e2240;
+    --card-2: #262b52;
+    --text: #eef0ff;
+    --muted: #9aa0c7;
+    --primary: #6c7bff;
+    --primary-2: #8a97ff;
+    --success: #2ecc71;
+    --error: #ff5c5c;
+    --warning: #ffb84d;
+    --border: #333a68;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #222a5c 0%, var(--bg) 60%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app { width: 100%; max-width: 820px; }
+  header.top { text-align: center; margin-bottom: 24px; }
+  header.top h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: .5px; }
+  header.top p { color: var(--muted); margin: 0; font-size: .95rem; }
+  .card {
+    background: linear-gradient(180deg, var(--card), var(--card-2));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    margin: 0 0 14px;
+    color: var(--primary-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .opt {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer; transition: all .15s ease; user-select: none;
+  }
+  .opt:hover { background: rgba(108,123,255,.12); border-color: var(--primary); }
+  .opt input { accent-color: var(--primary); width: 18px; height: 18px; cursor: pointer; }
+  .opt span { font-size: .98rem; }
+  .hint { font-size: .82rem; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 14px 20px;
+    background: var(--primary); color: white; border: none;
+    border-radius: 12px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all .15s ease; text-decoration: none;
+  }
+  .btn:hover:not(:disabled) { background: var(--primary-2); transform: translateY(-1px); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-block { width: 100%; }
+  .btn-lg { padding: 18px 26px; font-size: 1.1rem; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { background: rgba(255,255,255,.06); border-color: var(--primary); }
+  .btn-warning { background: var(--warning); color: #2b1a00; }
+  .btn-success { background: var(--success); }
+  .btn-success:hover:not(:disabled) { background: #4ade80; }
 
-    * {
-      box-sizing: border-box;
-    }
+  .hidden { display: none !important; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; gap: 10px; flex-wrap: wrap;
+  }
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin-bottom: 14px;
+  }
+  .stat {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 8px; text-align: center;
+  }
+  .stat .v { font-size: 1.4rem; font-weight: 700; display: block; }
+  .stat .l { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+  .stat.ok .v { color: var(--success); }
+  .stat.err .v { color: var(--error); }
+  .stat.pct .v { color: var(--primary-2); }
+  .stat.rep .v { color: var(--warning); }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
+  .play-area { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .play-area .btn { flex: 1; min-width: 160px; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 50% -10%, #222a5c 0%, var(--bg) 60%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-    }
+  .step { margin-top: 14px; }
+  .step-title {
+    font-size: .82rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 8px; font-weight: 600;
+  }
+  .choices {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .choice {
+    padding: 16px 10px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text); font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all .12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .choice:hover:not(:disabled) {
+    background: rgba(108,123,255,.18);
+    border-color: var(--primary); transform: translateY(-1px);
+  }
+  .choice.selected { background: var(--primary); border-color: var(--primary-2); }
+  .choice.correct { background: var(--success); border-color: var(--success); color: #062a14; }
+  .choice.wrong { background: var(--error); border-color: var(--error); color: #2a0000; }
+  .choice:disabled { cursor: not-allowed; opacity: .75; }
 
-    .app {
-      width: 100%;
-      max-width: 820px;
-    }
+  .feedback {
+    margin-top: 16px; padding: 14px 16px; border-radius: 12px;
+    font-weight: 600; text-align: center; min-height: 22px;
+    transition: all .2s ease;
+  }
+  .feedback.ok { background: rgba(46,204,113,.15); color: var(--success); border: 1px solid var(--success); }
+  .feedback.err { background: rgba(255,92,92,.15); color: var(--error); border: 1px solid var(--error); }
+  .feedback.info { background: rgba(108,123,255,.12); color: var(--primary-2); border: 1px solid var(--primary); }
 
-    header.top {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    header.top h1 {
-      font-size: 1.6rem;
-      margin: 0 0 6px;
-      letter-spacing: .5px;
-    }
-
-    header.top p {
-      color: var(--muted);
-      margin: 0;
-      font-size: .95rem;
-    }
-
-    .card {
-      background: linear-gradient(180deg, var(--card), var(--card-2));
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 22px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-
-    .card h2 {
-      font-size: 1.05rem;
-      margin: 0 0 14px;
-      color: var(--primary-2);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 600;
-    }
-
-    .options {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
-    }
-
-    .opt {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      background: rgba(255, 255, 255, .03);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all .15s ease;
-      user-select: none;
-    }
-
-    .opt:hover {
-      background: rgba(108, 123, 255, .12);
-      border-color: var(--primary);
-    }
-
-    .opt input {
-      accent-color: var(--primary);
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-
-    .opt span {
-      font-size: .98rem;
-    }
-
-    .hint {
-      font-size: .82rem;
-      color: var(--muted);
-      margin-top: 10px;
-      line-height: 1.5;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 20px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .15s ease;
-      text-decoration: none;
-    }
-
-    .btn:hover:not(:disabled) {
-      background: var(--primary-2);
-      transform: translateY(-1px);
-    }
-
-    .btn:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    .btn-block {
-      width: 100%;
-    }
-
-    .btn-lg {
-      padding: 18px 26px;
-      font-size: 1.1rem;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, .06);
-      border-color: var(--primary);
-    }
-
-    .btn-warning {
-      background: var(--warning);
-      color: #2b1a00;
-    }
-
-    .btn-success {
-      background: var(--success);
-    }
-
-    .btn-success:hover:not(:disabled) {
-      background: #4ade80;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .stat {
-      background: rgba(255, 255, 255, .04);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 8px;
-      text-align: center;
-    }
-
-    .stat .v {
-      font-size: 1.4rem;
-      font-weight: 700;
-      display: block;
-    }
-
-    .stat .l {
-      font-size: .72rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .8px;
-    }
-
-    .stat.ok .v {
-      color: var(--success);
-    }
-
-    .stat.err .v {
-      color: var(--error);
-    }
-
-    .stat.pct .v {
-      color: var(--primary-2);
-    }
-
-    .stat.rep .v {
-      color: var(--warning);
-    }
-
-    .play-area {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .play-area .btn {
-      flex: 1;
-      min-width: 160px;
-    }
-
-    .step {
-      margin-top: 14px;
-    }
-
-    .step-title {
-      font-size: .82rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .choices {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 8px;
-    }
-
-    .choice {
-      padding: 16px 10px;
-      background: rgba(255, 255, 255, .04);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .12s ease;
-    }
-
-    .choice:hover:not(:disabled) {
-      background: rgba(108, 123, 255, .18);
-      border-color: var(--primary);
-      transform: translateY(-1px);
-    }
-
-    .choice.selected {
-      background: var(--primary);
-      border-color: var(--primary-2);
-    }
-
-    .choice.correct {
-      background: var(--success);
-      border-color: var(--success);
-      color: #062a14;
-    }
-
-    .choice.wrong {
-      background: var(--error);
-      border-color: var(--error);
-      color: #2a0000;
-    }
-
-    .choice:disabled {
-      cursor: not-allowed;
-      opacity: .75;
-    }
-
-    .feedback {
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 12px;
-      font-weight: 600;
-      text-align: center;
-      min-height: 22px;
-      transition: all .2s ease;
-    }
-
-    .feedback.ok {
-      background: rgba(46, 204, 113, .15);
-      color: var(--success);
-      border: 1px solid var(--success);
-    }
-
-    .feedback.err {
-      background: rgba(255, 92, 92, .15);
-      color: var(--error);
-      border: 1px solid var(--error);
-    }
-
-    .feedback.info {
-      background: rgba(108, 123, 255, .12);
-      color: var(--primary-2);
-      border: 1px solid var(--primary);
-    }
-
-    @media (max-width: 520px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      header.top h1 {
-        font-size: 1.3rem;
-      }
-    }
-  </style>
+  @media (max-width: 520px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    header.top h1 { font-size: 1.3rem; }
+  }
+</style>
 </head>
-
 <body>
-  <div class="app">
+<div class="app">
 
-    <header class="top">
-      <h1>Práctica Auditiva</h1>
-      <p>Dictado de acordes</p>
-    </header>
+  <header class="top">
+    <h1>Práctica Auditiva</h1>
+    <p>Dictado de acordes</p>
+  </header>
 
-    <!-- ============ PANTALLA 1: CONFIGURACIÓN ============ -->
-    <section id="screen-setup">
-      <div class="card">
-        <h2>1. Tipos de acorde</h2>
-        <div class="options">
-          <label class="opt"><input type="checkbox" id="t-may" checked><span>Mayores</span></label>
-          <label class="opt"><input type="checkbox" id="t-men" checked><span>Menores</span></label>
-          <label class="opt"><input type="checkbox" id="t-aum" checked><span>Aumentados</span></label>
-          <label class="opt"><input type="checkbox" id="t-dis" checked><span>Disminuidos</span></label>
-        </div>
-        <p class="hint">Selecciona al menos un tipo. Los acordes se generarán aleatoriamente entre los marcados.</p>
+  <!-- ============ PANTALLA 1: CONFIGURACIÓN ============ -->
+  <section id="screen-setup">
+    <div class="card">
+      <h2>1. Tipos de acorde</h2>
+      <div class="options">
+        <label class="opt"><input type="checkbox" id="t-may" checked><span>Mayores</span></label>
+        <label class="opt"><input type="checkbox" id="t-men" checked><span>Menores</span></label>
+        <label class="opt"><input type="checkbox" id="t-aum" checked><span>Aumentados</span></label>
+        <label class="opt"><input type="checkbox" id="t-dis" checked><span>Disminuidos</span></label>
+      </div>
+      <p class="hint">Selecciona al menos un tipo. Los acordes se generarán aleatoriamente entre los marcados.</p>
+    </div>
+
+    <div class="card">
+      <h2>2. Incluir (opcional)</h2>
+      <div class="options">
+        <label class="opt"><input type="checkbox" id="inc-pos"><span>Posición</span></label>
+        <label class="opt"><input type="checkbox" id="inc-est"><span>Estado</span></label>
+      </div>
+      <p class="hint">
+        • Sin marcar nada → solo acordes en estado fundamental, posición cerrada.<br>
+        • <b>Posición</b> → se pedirá indicar: 8va, 5ta o 3ra.<br>
+        • <b>Estado</b> → se pedirá indicar: Fundamental, 6 (1ª inv.) o 6/4 (2ª inv.).<br>
+        • Los acordes <b>aumentados</b> siempre suenan en estado fundamental (no aplica Estado).
+      </p>
+    </div>
+
+    <button id="btn-start" class="btn btn-block btn-lg">▶ Comenzar Dictado</button>
+  </section>
+
+  <!-- ============ PANTALLA 2: DICTADO ============ -->
+  <section id="screen-dictado" class="hidden">
+    <div class="topbar">
+      <button id="btn-exit" class="btn btn-ghost">← Salir al menú</button>
+      <div id="progress-info" style="color: var(--muted); font-size:.9rem;">Práctica libre</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat ok"><span class="v" id="stat-ok">0</span><span class="l">Aciertos</span></div>
+      <div class="stat err"><span class="v" id="stat-err">0</span><span class="l">Errores</span></div>
+      <div class="stat pct"><span class="v" id="stat-pct">—</span><span class="l">% Acierto</span></div>
+      <div class="stat rep"><span class="v" id="stat-rep">0</span><span class="l">Repeticiones</span></div>
+    </div>
+
+    <div class="play-area">
+      <button id="btn-replay" class="btn">🔁 Repetir acorde</button>
+      <button id="btn-show" class="btn btn-warning">👁 Ver respuesta (−1)</button>
+    </div>
+
+    <div class="card">
+      <div class="step" id="step-tipo">
+        <div class="step-title">Paso 1 · Tipo de acorde</div>
+        <div class="choices" id="choices-tipo"></div>
       </div>
 
-      <div class="card">
-        <h2>2. Incluir (opcional)</h2>
-        <div class="options">
-          <label class="opt"><input type="checkbox" id="inc-pos"><span>Posición</span></label>
-          <label class="opt"><input type="checkbox" id="inc-est"><span>Estado</span></label>
-        </div>
-        <p class="hint">
-          • Sin marcar nada → solo acordes en estado fundamental.<br>
-          • <b>Posición</b> → se pedirá indicar: 8va, 5ta o 3ra.<br>
-          • <b>Estado</b> → se pedirá indicar: Fundamental, 6 (1ª inv.) o 6/4 (2ª inv.).<br>
-          • Los acordes <b>aumentados</b> siempre suenan en estado fundamental (no aplica Estado).
-        </p>
+      <div class="step hidden" id="step-pos">
+        <div class="step-title">Paso 2 · Posición</div>
+        <div class="choices" id="choices-pos"></div>
       </div>
 
-      <button id="btn-start" class="btn btn-block btn-lg">▶ Comenzar Dictado</button>
-    </section>
-
-    <!-- ============ PANTALLA 2: DICTADO ============ -->
-    <section id="screen-dictado" class="hidden">
-      <div class="topbar">
-        <button id="btn-exit" class="btn btn-ghost">← Salir al menú</button>
-        <div id="progress-info" style="color: var(--muted); font-size:.9rem;">Práctica libre</div>
+      <div class="step hidden" id="step-est">
+        <div class="step-title">Paso 3 · Estado / Inversión</div>
+        <div class="choices" id="choices-est"></div>
       </div>
 
-      <div class="stats">
-        <div class="stat ok"><span class="v" id="stat-ok">0</span><span class="l">Aciertos</span></div>
-        <div class="stat err"><span class="v" id="stat-err">0</span><span class="l">Errores</span></div>
-        <div class="stat pct"><span class="v" id="stat-pct">—</span><span class="l">% Acierto</span></div>
-        <div class="stat rep"><span class="v" id="stat-rep">0</span><span class="l">Repeticiones</span></div>
+      <div style="text-align:center; margin-top:16px;">
+        <button id="btn-submit" class="btn btn-lg btn-success">✓ Enviar respuesta</button>
+        <div id="submit-hint" class="hint" style="text-align:center; min-height:20px; margin-top:8px;"></div>
       </div>
 
-      <div class="play-area">
-        <button id="btn-replay" class="btn">🔁 Repetir acorde</button>
-        <button id="btn-show" class="btn btn-warning">👁 Ver respuesta (−1)</button>
+      <div id="feedback" class="feedback info" style="display:none;"></div>
+      <div style="text-align:center; margin-top:14px;">
+        <button id="btn-next" class="btn btn-lg hidden">Siguiente acorde →</button>
       </div>
+    </div>
+  </section>
 
-      <div class="card">
-        <div class="step" id="step-tipo">
-          <div class="step-title">Paso 1 · Tipo de acorde</div>
-          <div class="choices" id="choices-tipo"></div>
-        </div>
+</div>
 
-        <div class="step hidden" id="step-pos">
-          <div class="step-title">Paso 2 · Posición</div>
-          <div class="choices" id="choices-pos"></div>
-        </div>
+<!-- Tone.js desde CDN -->
+<script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+<!-- Módulo de piano -->
+<script src="piano-sampler.js"></script>
 
-        <div class="step hidden" id="step-est">
-          <div class="step-title">Paso 3 · Estado / Inversión</div>
-          <div class="choices" id="choices-est"></div>
-        </div>
+<script>
+/* =========================================================
+   PRÁCTICA AUDITIVA — DICTADO DE ACORDES
+   - Fixes para iOS: desbloqueo táctil del AudioContext
+   - Duración del acorde: 4 segundos
+   - Botón "Enviar respuesta" siempre visible + hint contextual
+   - Aumentados: envío directo tras seleccionar tipo
+   - Voz adicional: bajo duplicado una 8va abajo
+   ========================================================= */
 
-        <div style="text-align:center; margin-top:16px;">
-          <button id="btn-submit" class="btn btn-lg btn-success">✓ Enviar respuesta</button>
-          <div id="submit-hint" class="hint" style="text-align:center; min-height:20px; margin-top:8px;"></div>
-        </div>
+const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 
-        <div id="feedback" class="feedback info" style="display:none;"></div>
-        <div style="text-align:center; margin-top:14px;">
-          <button id="btn-next" class="btn btn-lg hidden">Siguiente acorde →</button>
-        </div>
-      </div>
-    </section>
+function placeInOctave(pc, targetOctave) {
+  return ((pc % 12) + 12) % 12 + 12 * (targetOctave + 1);
+}
 
-  </div>
+// ---------- Intervalos ----------
+const CHORD_INTERVALS = {
+  mayor:      [0, 4, 7],
+  menor:      [0, 3, 7],
+  aumentado:  [0, 4, 8],
+  disminuido: [0, 3, 6],
+};
+const CHORD_LABEL = {
+  mayor: "Mayor", menor: "Menor", aumentado: "Aumentado", disminuido: "Disminuido"
+};
 
-  <!-- Tone.js desde CDN -->
-  <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
-  <!-- Módulo de piano -->
-  <script src="piano-sampler.js"></script>
+// ---------- Banco de voicings ----------
+const VOICINGS = {
+  "Fundamental": {
+    "5ta": [ [0,0], [0,1], [1,1], [2,1] ],
+    "8va": [ [0,0], [1,1], [2,1], [0,2] ],
+    "3ra": [ [0,0], [2,1], [0,2], [1,2] ],
+  },
+  "6": {
+    "5ta": [ [1,0], [0,1], [1,1], [2,1] ],
+    "8va": [ [1,0], [1,1], [2,1], [0,2] ],
+    "3ra": [ [1,0], [2,1], [0,2], [1,2] ],
+  },
+  "6/4": {
+    "5ta": [ [2,0], [0,1], [1,1], [2,1] ],
+    "8va": [ [2,0], [1,1], [2,1], [0,2] ],
+    "3ra": [ [2,0], [2,1], [0,2], [1,2] ],
+  },
+};
 
-  <script>
-    /* =========================================================
-       PRÁCTICA AUDITIVA — DICTADO DE ACORDES
-       - Duración del acorde: 4 segundos
-       - Botón "Enviar respuesta" siempre visible + hint contextual
-       - Aumentados: envío directo tras seleccionar tipo
-       - Voz adicional: bajo duplicado una 8va abajo
-       ========================================================= */
+// ---------- Estado ----------
+const state = {
+  config: {
+    tipos: [],
+    incluirPos: false,
+    incluirEst: false,
+  },
+  current: null,
+  answers: { tipo: null, posicion: null, estado: null },
+  stats: { ok: 0, err: 0, rep: 0 },
+  locked: false,
+  audioReady: false,
+};
 
-    const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const $ = (id) => document.getElementById(id);
+const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    function placeInOctave(pc, targetOctave) {
-      return ((pc % 12) + 12) % 12 + 12 * (targetOctave + 1);
-    }
+// ---------- Voicing ----------
+function buildVoicing(tipo, tonic, estado, posicion) {
+  const intervals = CHORD_INTERVALS[tipo];
+  const basePc = NOTE_NAMES.indexOf(tonic);
 
-    // ---------- Intervalos ----------
-    const CHORD_INTERVALS = {
-      mayor: [0, 4, 7],
-      menor: [0, 3, 7],
-      aumentado: [0, 4, 8],
-      disminuido: [0, 3, 6],
-    };
-    const CHORD_LABEL = {
-      mayor: "Mayor", menor: "Menor", aumentado: "Aumentado", disminuido: "Disminuido"
-    };
+  if (!posicion) {
+    let gradoBajo;
+    if (estado === "Fundamental") gradoBajo = 0;
+    else if (estado === "6")      gradoBajo = 1;
+    else                          gradoBajo = 2;
 
-    // ---------- Banco de voicings ----------
-    const VOICINGS = {
-      "Fundamental": {
-        "5ta": [[0, 0], [0, 1], [1, 1], [2, 1]],
-        "8va": [[0, 0], [1, 1], [2, 1], [0, 2]],
-        "3ra": [[0, 0], [2, 1], [0, 2], [1, 2]],
-      },
-      "6": {
-        "5ta": [[1, 0], [0, 1], [1, 1], [2, 1]],
-        "8va": [[1, 0], [1, 1], [2, 1], [0, 2]],
-        "3ra": [[1, 0], [2, 1], [0, 2], [1, 2]],
-      },
-      "6/4": {
-        "5ta": [[2, 0], [0, 1], [1, 1], [2, 1]],
-        "8va": [[2, 0], [1, 1], [2, 1], [0, 2]],
-        "3ra": [[2, 0], [2, 1], [0, 2], [1, 2]],
-      },
-    };
+    const bajoMidi = placeInOctave((basePc + intervals[gradoBajo]) % 12, 3);
+    const otrosGrados = [0, 1, 2].filter(g => g !== gradoBajo);
+    const v1 = placeInOctave((basePc + intervals[otrosGrados[0]]) % 12, 4);
+    const v2 = placeInOctave((basePc + intervals[otrosGrados[1]]) % 12, 4);
+    return [bajoMidi, v1, v2].sort((a, b) => a - b);
+  }
 
-    // ---------- Estado ----------
-    const state = {
-      config: {
-        tipos: [],
-        incluirPos: false,
-        incluirEst: false,
-      },
-      current: null,
-      answers: { tipo: null, posicion: null, estado: null },
-      stats: { ok: 0, err: 0, rep: 0 },
-      locked: false,
-      audioReady: false,
-    };
+  const template = VOICINGS[estado][posicion];
+  return template.map(([grado, octOffset]) => {
+    const pc = (basePc + intervals[grado]) % 12;
+    return placeInOctave(pc, 3 + octOffset);
+  });
+}
 
-    const $ = (id) => document.getElementById(id);
-    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+function randomChord() {
+  const tipo = rand(state.config.tipos);
+  const tonic = rand(NOTE_NAMES);
 
-    // ---------- Voicing ----------
-    function buildVoicing(tipo, tonic, estado, posicion) {
-      const intervals = CHORD_INTERVALS[tipo];
-      const basePc = NOTE_NAMES.indexOf(tonic);
+  let estado = "Fundamental";
+  if (state.config.incluirEst && tipo !== "aumentado") {
+    estado = rand(["Fundamental", "6", "6/4"]);
+  }
 
-      if (!posicion) {
-        let gradoBajo;
-        if (estado === "Fundamental") gradoBajo = 0;
-        else if (estado === "6") gradoBajo = 1;
-        else gradoBajo = 2;
+  let posicion = null;
+  if (state.config.incluirPos && tipo !== "aumentado") {
+    posicion = rand(["8va", "5ta", "3ra"]);
+  }
 
-        const bajoMidi = placeInOctave((basePc + intervals[gradoBajo]) % 12, 3);
-        const otrosGrados = [0, 1, 2].filter(g => g !== gradoBajo);
-        const v1 = placeInOctave((basePc + intervals[otrosGrados[0]]) % 12, 4);
-        const v2 = placeInOctave((basePc + intervals[otrosGrados[1]]) % 12, 4);
-        return [bajoMidi, v1, v2].sort((a, b) => a - b);
-      }
+  const midis = buildVoicing(tipo, tonic, estado, posicion);
+  return { tipo, tonic, estado, posicion, midis };
+}
 
-      const template = VOICINGS[estado][posicion];
-      return template.map(([grado, octOffset]) => {
-        const pc = (basePc + intervals[grado]) % 12;
-        return placeInOctave(pc, 3 + octOffset);
-      });
-    }
+// ---------- Audio ----------
+function playCurrentChord() {
+  if (!state.current) return;
+  const midis = state.current.midis;
+  const bajoDoblado = Math.max(24, midis[0] - 12);
+  const notas = [bajoDoblado, ...midis];
+  // Duración del acorde: 4 segundos
+  PianoSampler.playChord(notas, 4, 0.75);
+}
 
-    function randomChord() {
-      const tipo = rand(state.config.tipos);
-      const tonic = rand(NOTE_NAMES);
+// ---------- UI ----------
+function showScreen(id) {
+  ["screen-setup", "screen-dictado"].forEach(s => {
+    $(s).classList.toggle("hidden", s !== id);
+  });
+}
 
-      let estado = "Fundamental";
-      if (state.config.incluirEst && tipo !== "aumentado") {
-        estado = rand(["Fundamental", "6", "6/4"]);
-      }
+function updateStats() {
+  const { ok, err, rep } = state.stats;
+  $("stat-ok").textContent = ok;
+  $("stat-err").textContent = err;
+  $("stat-rep").textContent = rep;
+  const total = ok + err;
+  $("stat-pct").textContent = total === 0 ? "—" : Math.round((ok / total) * 100) + "%";
+}
 
-      let posicion = null;
-      if (state.config.incluirPos && tipo !== "aumentado") {
-        posicion = rand(["8va", "5ta", "3ra"]);
-      }
+function buildAllChoices() {
+  const contTipo = $("choices-tipo");
+  contTipo.innerHTML = "";
+  const orden = ["mayor", "menor", "aumentado", "disminuido"];
+  orden.filter(t => state.config.tipos.includes(t)).forEach(t => {
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.dataset.v = t;
+    b.textContent = CHORD_LABEL[t];
+    b.addEventListener("click", () => selectAnswer("tipo", t, b));
+    contTipo.appendChild(b);
+  });
 
-      const midis = buildVoicing(tipo, tonic, estado, posicion);
-      return { tipo, tonic, estado, posicion, midis };
-    }
+  const contPos = $("choices-pos");
+  contPos.innerHTML = "";
+  [["8va","8va"], ["5ta","5ta"], ["3ra","3ra"]].forEach(([v, label]) => {
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.dataset.v = v;
+    b.textContent = label;
+    b.addEventListener("click", () => selectAnswer("posicion", v, b));
+    contPos.appendChild(b);
+  });
 
-    // ---------- Audio ----------
-    function playCurrentChord() {
-      if (!state.current) return;
-      const midis = state.current.midis;
-      // Duplicar el bajo una 8va abajo (límite inferior C1 = MIDI 24)
-      const bajoDoblado = Math.max(24, midis[0] - 12);
-      const notas = [bajoDoblado, ...midis];
-      // Duración del acorde: 4 segundos
-      PianoSampler.playChord(notas, 4, 0.75);
-    }
+  const contEst = $("choices-est");
+  contEst.innerHTML = "";
+  [["Fundamental","Fundamental"], ["6","6 (1ª inv.)"], ["6/4","6/4 (2ª inv.)"]].forEach(([v, label]) => {
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.dataset.v = v;
+    b.textContent = label;
+    b.addEventListener("click", () => selectAnswer("estado", v, b));
+    contEst.appendChild(b);
+  });
+}
 
-    // ---------- UI ----------
-    function showScreen(id) {
-      ["screen-setup", "screen-dictado"].forEach(s => {
-        $(s).classList.toggle("hidden", s !== id);
-      });
-    }
+function resetChoices() {
+  document.querySelectorAll(".choice").forEach(b => {
+    b.classList.remove("selected", "correct", "wrong");
+    b.disabled = false;
+  });
+}
 
-    function updateStats() {
-      const { ok, err, rep } = state.stats;
-      $("stat-ok").textContent = ok;
-      $("stat-err").textContent = err;
-      $("stat-rep").textContent = rep;
-      const total = ok + err;
-      $("stat-pct").textContent = total === 0 ? "—" : Math.round((ok / total) * 100) + "%";
-    }
+function setChoicesDisabled(v) {
+  document.querySelectorAll(".choice").forEach(b => b.disabled = v);
+}
 
-    function buildAllChoices() {
-      const contTipo = $("choices-tipo");
-      contTipo.innerHTML = "";
-      const orden = ["mayor", "menor", "aumentado", "disminuido"];
-      orden.filter(t => state.config.tipos.includes(t)).forEach(t => {
-        const b = document.createElement("button");
-        b.className = "choice";
-        b.dataset.v = t;
-        b.textContent = CHORD_LABEL[t];
-        b.addEventListener("click", () => selectAnswer("tipo", t, b));
-        contTipo.appendChild(b);
-      });
+// ---------- Selección de respuesta ----------
+function selectAnswer(kind, value, btn) {
+  if (state.locked) return;
+  state.answers[kind] = value;
 
-      const contPos = $("choices-pos");
-      contPos.innerHTML = "";
-      [["8va", "8va"], ["5ta", "5ta"], ["3ra", "3ra"]].forEach(([v, label]) => {
-        const b = document.createElement("button");
-        b.className = "choice";
-        b.dataset.v = v;
-        b.textContent = label;
-        b.addEventListener("click", () => selectAnswer("posicion", v, b));
-        contPos.appendChild(b);
-      });
+  btn.parentElement.querySelectorAll(".choice").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
 
-      const contEst = $("choices-est");
-      contEst.innerHTML = "";
-      [["Fundamental", "Fundamental"], ["6", "6 (1ª inv.)"], ["6/4", "6/4 (2ª inv.)"]].forEach(([v, label]) => {
-        const b = document.createElement("button");
-        b.className = "choice";
-        b.dataset.v = v;
-        b.textContent = label;
-        b.addEventListener("click", () => selectAnswer("estado", v, b));
-        contEst.appendChild(b);
-      });
-    }
-
-    function resetChoices() {
-      document.querySelectorAll(".choice").forEach(b => {
-        b.classList.remove("selected", "correct", "wrong");
-        b.disabled = false;
-      });
-    }
-
-    function setChoicesDisabled(v) {
-      document.querySelectorAll(".choice").forEach(b => b.disabled = v);
-    }
-
-    // ---------- Selección de respuesta ----------
-    function selectAnswer(kind, value, btn) {
-      if (state.locked) return;
-      state.answers[kind] = value;
-
-      btn.parentElement.querySelectorAll(".choice").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-
-      if (kind === "tipo") {
-        if (value === "aumentado") {
-          $("step-pos").classList.add("hidden");
-          $("step-est").classList.add("hidden");
-        } else {
-          if (state.config.incluirPos) $("step-pos").classList.remove("hidden");
-          if (state.config.incluirEst) $("step-est").classList.remove("hidden");
-        }
-      } else if (kind === "posicion") {
-        if (state.config.incluirEst && state.answers.tipo !== "aumentado") {
-          $("step-est").classList.remove("hidden");
-        }
-      }
-
-      updateSubmitButton();
-    }
-
-    function updateSubmitButton() {
-      const a = state.answers;
-      const c = state.current;
-      const hint = $("submit-hint");
-
-      if (!c || state.locked) { hint.textContent = ""; return; }
-
-      if (a.tipo === "aumentado") {
-        hint.textContent = "Este acorde no tiene posición ni estado — puedes enviar la respuesta.";
-        return;
-      }
-      if (!a.tipo) {
-        hint.textContent = "Selecciona el tipo de acorde para continuar.";
-        return;
-      }
-      if (state.config.incluirPos && !a.posicion) {
-        hint.textContent = "Falta indicar la posición.";
-        return;
-      }
-      if (state.config.incluirEst && !a.estado) {
-        hint.textContent = "Falta indicar el estado (inversión).";
-        return;
-      }
-      hint.textContent = "";
-    }
-
-    function showSubmitHint(msg, kind = "info") {
-      const hint = $("submit-hint");
-      hint.textContent = msg;
-      hint.style.color = kind === "err" ? "var(--error)" : "var(--primary-2)";
-      setTimeout(() => {
-        hint.style.color = "";
-        updateSubmitButton();
-      }, 2000);
-    }
-
-    // ---------- Evaluación ----------
-    function evaluate() {
-      if (state.locked) return;
-
-      const a = state.answers;
-      const c = state.current;
-      if (!c) return;
-
-      if (!a.tipo) {
-        showSubmitHint("Primero selecciona el tipo de acorde.", "err");
-        return;
-      }
-      const esAumentado = a.tipo === "aumentado";
-      if (!esAumentado) {
-        if (state.config.incluirPos && !a.posicion) {
-          showSubmitHint("Falta indicar la posición.", "err");
-          return;
-        }
-        if (state.config.incluirEst && !a.estado) {
-          showSubmitHint("Falta indicar el estado.", "err");
-          return;
-        }
-      }
-
-      state.locked = true;
-      setChoicesDisabled(true);
-      $("submit-hint").textContent = "";
-
-      const tipoOk = a.tipo === c.tipo;
-      const posOk = c.tipo === "aumentado" || !state.config.incluirPos || a.posicion === c.posicion;
-      const estOk = c.tipo === "aumentado" || !state.config.incluirEst || a.estado === c.estado;
-      const allOk = tipoOk && posOk && estOk;
-
-      markButtons(c, a);
-
-      const partes = [`Tipo: ${CHORD_LABEL[c.tipo]}`];
-      if (state.config.incluirPos && c.tipo !== "aumentado") partes.push(`Posición: ${c.posicion}`);
-      if (state.config.incluirEst && c.tipo !== "aumentado") partes.push(`Estado: ${c.estado}`);
-
-      if (allOk) {
-        state.stats.ok++;
-        showFeedback("ok", "✅ ¡Correcto! — " + partes.join(" · "));
-      } else {
-        state.stats.err++;
-        showFeedback("err", `❌ Incorrecto — era: ${partes.join(" · ")}`);
-      }
-
-      updateStats();
-      showNextButton();
-    }
-
-    function markButtons(correct, answers) {
-      document.querySelectorAll("#choices-tipo .choice").forEach(b => {
-        if (b.dataset.v === correct.tipo) b.classList.add("correct");
-        else if (b.dataset.v === answers.tipo && answers.tipo !== correct.tipo) b.classList.add("wrong");
-      });
-      if (state.config.incluirPos && correct.tipo !== "aumentado") {
-        document.querySelectorAll("#choices-pos .choice").forEach(b => {
-          if (b.dataset.v === correct.posicion) b.classList.add("correct");
-          else if (b.dataset.v === answers.posicion && answers.posicion !== correct.posicion) b.classList.add("wrong");
-        });
-      }
-      if (state.config.incluirEst && correct.tipo !== "aumentado") {
-        document.querySelectorAll("#choices-est .choice").forEach(b => {
-          if (b.dataset.v === correct.estado) b.classList.add("correct");
-          else if (b.dataset.v === answers.estado && answers.estado !== correct.estado) b.classList.add("wrong");
-        });
-      }
-    }
-
-    function showFeedback(kind, msg) {
-      const el = $("feedback");
-      el.className = "feedback " + kind;
-      el.textContent = msg;
-      el.style.display = "block";
-    }
-
-    function hideFeedback() {
-      const el = $("feedback");
-      el.style.display = "none";
-      el.textContent = "";
-    }
-
-    function showNextButton() {
-      const b = $("btn-next");
-      b.classList.remove("hidden");
-      b.focus();
-    }
-    function hideNextButton() { $("btn-next").classList.add("hidden"); }
-
-    // ---------- Ciclo ----------
-    function nextChord() {
-      hideFeedback();
-      hideNextButton();
-      resetChoices();
-      state.answers = { tipo: null, posicion: null, estado: null };
-      state.current = randomChord();
-
+  if (kind === "tipo") {
+    if (value === "aumentado") {
       $("step-pos").classList.add("hidden");
       $("step-est").classList.add("hidden");
-
-      updateStats();
-      updateSubmitButton();
-
-      setTimeout(() => {
-        playCurrentChord();
-        state.stats.rep = 0;
-        updateStats();
-      }, 200);
+    } else {
+      if (state.config.incluirPos) $("step-pos").classList.remove("hidden");
+      if (state.config.incluirEst) $("step-est").classList.remove("hidden");
     }
+  } else if (kind === "posicion") {
+    if (state.config.incluirEst && state.answers.tipo !== "aumentado") {
+      $("step-est").classList.remove("hidden");
+    }
+  }
 
-    // ---------- Inicio ----------
-    $("btn-start").addEventListener("click", async () => {
-      const tipos = [];
-      if ($("t-may").checked) tipos.push("mayor");
-      if ($("t-men").checked) tipos.push("menor");
-      if ($("t-aum").checked) tipos.push("aumentado");
-      if ($("t-dis").checked) tipos.push("disminuido");
+  updateSubmitButton();
+}
 
-      if (tipos.length === 0) {
-        alert("Debes seleccionar al menos un tipo de acorde.");
-        return;
-      }
+function updateSubmitButton() {
+  const a = state.answers;
+  const c = state.current;
+  const hint = $("submit-hint");
 
-      if (!state.audioReady) {
-        try {
-          $("btn-start").disabled = true;
-          $("btn-start").textContent = "⏳ Cargando piano...";
-          await PianoSampler.init();
-          state.audioReady = true;
-        } catch (e) {
-          alert("Error al cargar el audio: " + e.message);
-          $("btn-start").disabled = false;
-          $("btn-start").textContent = "▶ Comenzar Dictado";
-          return;
-        } finally {
-          $("btn-start").disabled = false;
-          $("btn-start").textContent = "▶ Comenzar Dictado";
-        }
-      }
+  if (!c || state.locked) { hint.textContent = ""; return; }
 
-      state.config.tipos = tipos;
-      state.config.incluirPos = $("inc-pos").checked;
-      state.config.incluirEst = $("inc-est").checked;
+  if (a.tipo === "aumentado") {
+    hint.textContent = "Este acorde no tiene posición ni estado — puedes enviar la respuesta.";
+    return;
+  }
+  if (!a.tipo) {
+    hint.textContent = "Selecciona el tipo de acorde para continuar.";
+    return;
+  }
+  if (state.config.incluirPos && !a.posicion) {
+    hint.textContent = "Falta indicar la posición.";
+    return;
+  }
+  if (state.config.incluirEst && !a.estado) {
+    hint.textContent = "Falta indicar el estado (inversión).";
+    return;
+  }
+  hint.textContent = "";
+}
 
-      state.stats = { ok: 0, err: 0, rep: 0 };
-      state.locked = false;
-      state.current = null;
-      $("btn-replay").disabled = false;
-      $("btn-show").disabled = false;
+function showSubmitHint(msg, kind = "info") {
+  const hint = $("submit-hint");
+  hint.textContent = msg;
+  hint.style.color = kind === "err" ? "var(--error)" : "var(--primary-2)";
+  setTimeout(() => {
+    hint.style.color = "";
+    updateSubmitButton();
+  }, 2000);
+}
 
-      buildAllChoices();
-      showScreen("screen-dictado");
-      updateStats();
-      nextChord();
+// ---------- Evaluación ----------
+function evaluate() {
+  if (state.locked) return;
+
+  const a = state.answers;
+  const c = state.current;
+  if (!c) return;
+
+  if (!a.tipo) {
+    showSubmitHint("Primero selecciona el tipo de acorde.", "err");
+    return;
+  }
+  const esAumentado = a.tipo === "aumentado";
+  if (!esAumentado) {
+    if (state.config.incluirPos && !a.posicion) {
+      showSubmitHint("Falta indicar la posición.", "err");
+      return;
+    }
+    if (state.config.incluirEst && !a.estado) {
+      showSubmitHint("Falta indicar el estado.", "err");
+      return;
+    }
+  }
+
+  state.locked = true;
+  setChoicesDisabled(true);
+  $("submit-hint").textContent = "";
+
+  const tipoOk = a.tipo === c.tipo;
+  const posOk  = c.tipo === "aumentado" || !state.config.incluirPos || a.posicion === c.posicion;
+  const estOk  = c.tipo === "aumentado" || !state.config.incluirEst || a.estado === c.estado;
+  const allOk  = tipoOk && posOk && estOk;
+
+  markButtons(c, a);
+
+  const partes = [`Tipo: ${CHORD_LABEL[c.tipo]}`];
+  if (state.config.incluirPos && c.tipo !== "aumentado") partes.push(`Posición: ${c.posicion}`);
+  if (state.config.incluirEst && c.tipo !== "aumentado") partes.push(`Estado: ${c.estado}`);
+
+  if (allOk) {
+    state.stats.ok++;
+    showFeedback("ok", "✅ ¡Correcto! — " + partes.join(" · "));
+  } else {
+    state.stats.err++;
+    showFeedback("err", `❌ Incorrecto — era: ${partes.join(" · ")}`);
+  }
+
+  updateStats();
+  showNextButton();
+}
+
+function markButtons(correct, answers) {
+  document.querySelectorAll("#choices-tipo .choice").forEach(b => {
+    if (b.dataset.v === correct.tipo) b.classList.add("correct");
+    else if (b.dataset.v === answers.tipo && answers.tipo !== correct.tipo) b.classList.add("wrong");
+  });
+  if (state.config.incluirPos && correct.tipo !== "aumentado") {
+    document.querySelectorAll("#choices-pos .choice").forEach(b => {
+      if (b.dataset.v === correct.posicion) b.classList.add("correct");
+      else if (b.dataset.v === answers.posicion && answers.posicion !== correct.posicion) b.classList.add("wrong");
     });
-
-    // ---------- Salir ----------
-    $("btn-exit").addEventListener("click", () => {
-      if ((state.stats.ok + state.stats.err) > 0) {
-        if (!confirm("¿Salir del dictado? Se perderá el progreso de esta sesión.")) return;
-      }
-      showScreen("screen-setup");
-      state.current = null;
-      state.locked = false;
-      hideFeedback();
-      hideNextButton();
-      $("submit-hint").textContent = "";
+  }
+  if (state.config.incluirEst && correct.tipo !== "aumentado") {
+    document.querySelectorAll("#choices-est .choice").forEach(b => {
+      if (b.dataset.v === correct.estado) b.classList.add("correct");
+      else if (b.dataset.v === answers.estado && answers.estado !== correct.estado) b.classList.add("wrong");
     });
+  }
+}
 
-    // ---------- Repetir ----------
-    $("btn-replay").addEventListener("click", () => {
-      if (!state.current) return;
-      playCurrentChord();
-      state.stats.rep++;
-      updateStats();
+function showFeedback(kind, msg) {
+  const el = $("feedback");
+  el.className = "feedback " + kind;
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function hideFeedback() {
+  const el = $("feedback");
+  el.style.display = "none";
+  el.textContent = "";
+}
+
+function showNextButton() {
+  const b = $("btn-next");
+  b.classList.remove("hidden");
+  b.focus();
+}
+function hideNextButton() { $("btn-next").classList.add("hidden"); }
+
+// ---------- Ciclo ----------
+function nextChord() {
+  hideFeedback();
+  hideNextButton();
+  resetChoices();
+  state.answers = { tipo: null, posicion: null, estado: null };
+  state.current = randomChord();
+
+  $("step-pos").classList.add("hidden");
+  $("step-est").classList.add("hidden");
+
+  updateStats();
+  updateSubmitButton();
+
+  setTimeout(() => {
+    playCurrentChord();
+    state.stats.rep = 0;
+    updateStats();
+  }, 200);
+}
+
+// =========================================================
+//  FIX iOS: desbloquear AudioContext en el primer toque
+//  (touchend es el evento más confiable en iOS Safari)
+// =========================================================
+let audioUnlocked = false;
+async function unlockOnce() {
+  if (audioUnlocked) return;
+  try {
+    await PianoSampler.unlockAudio();
+    audioUnlocked = true;
+  } catch (e) {
+    console.warn("unlockOnce failed:", e);
+  }
+}
+document.addEventListener("touchend", unlockOnce, { passive: true });
+document.addEventListener("pointerup", unlockOnce, { passive: true });
+document.addEventListener("click", unlockOnce, { passive: true });
+
+// ---------- Inicio ----------
+$("btn-start").addEventListener("click", async () => {
+  // 1) Desbloquear audio INMEDIATAMENTE dentro del gesto (crítico para iOS)
+  try {
+    await PianoSampler.unlockAudio();
+    audioUnlocked = true;
+  } catch (e) {
+    console.warn("No se pudo desbloquear el audio:", e);
+  }
+
+  // 2) Validación de tipos
+  const tipos = [];
+  if ($("t-may").checked) tipos.push("mayor");
+  if ($("t-men").checked) tipos.push("menor");
+  if ($("t-aum").checked) tipos.push("aumentado");
+  if ($("t-dis").checked) tipos.push("disminuido");
+
+  if (tipos.length === 0) {
+    alert("Debes seleccionar al menos un tipo de acorde.");
+    return;
+  }
+
+  // 3) Cargar samples la primera vez
+  if (!state.audioReady) {
+    try {
+      $("btn-start").disabled = true;
+      $("btn-start").textContent = "⏳ Cargando piano...";
+      await PianoSampler.init();
+      state.audioReady = true;
+    } catch (e) {
+      alert("Error al cargar el audio: " + e.message);
+      $("btn-start").disabled = false;
+      $("btn-start").textContent = "▶ Comenzar Dictado";
+      return;
+    } finally {
+      $("btn-start").disabled = false;
+      $("btn-start").textContent = "▶ Comenzar Dictado";
+    }
+  }
+
+  // 4) Configurar estado
+  state.config.tipos = tipos;
+  state.config.incluirPos = $("inc-pos").checked;
+  state.config.incluirEst = $("inc-est").checked;
+
+  state.stats = { ok: 0, err: 0, rep: 0 };
+  state.locked = false;
+  state.current = null;
+  $("btn-replay").disabled = false;
+  $("btn-show").disabled = false;
+
+  buildAllChoices();
+  showScreen("screen-dictado");
+  updateStats();
+  nextChord();
+});
+
+// ---------- Salir ----------
+$("btn-exit").addEventListener("click", () => {
+  if ((state.stats.ok + state.stats.err) > 0) {
+    if (!confirm("¿Salir del dictado? Se perderá el progreso de esta sesión.")) return;
+  }
+  showScreen("screen-setup");
+  state.current = null;
+  state.locked = false;
+  hideFeedback();
+  hideNextButton();
+  $("submit-hint").textContent = "";
+});
+
+// ---------- Repetir ----------
+$("btn-replay").addEventListener("click", () => {
+  if (!state.current) return;
+  playCurrentChord();
+  state.stats.rep++;
+  updateStats();
+});
+
+// ---------- Ver respuesta ----------
+$("btn-show").addEventListener("click", () => {
+  if (!state.current || state.locked) return;
+  const c = state.current;
+
+  const partes = [`Tipo: ${CHORD_LABEL[c.tipo]}`];
+  if (state.config.incluirPos && c.tipo !== "aumentado") partes.push(`Posición: ${c.posicion}`);
+  if (state.config.incluirEst && c.tipo !== "aumentado") partes.push(`Estado: ${c.estado}`);
+  showFeedback("info", "👁 Respuesta: " + partes.join(" · "));
+
+  state.locked = true;
+  state.stats.err++;
+  updateStats();
+  setChoicesDisabled(true);
+  $("submit-hint").textContent = "";
+
+  document.querySelectorAll("#choices-tipo .choice").forEach(b => {
+    if (b.dataset.v === c.tipo) b.classList.add("correct");
+  });
+  if (state.config.incluirPos && c.tipo !== "aumentado") {
+    document.querySelectorAll("#choices-pos .choice").forEach(b => {
+      if (b.dataset.v === c.posicion) b.classList.add("correct");
     });
-
-    // ---------- Ver respuesta ----------
-    $("btn-show").addEventListener("click", () => {
-      if (!state.current || state.locked) return;
-      const c = state.current;
-
-      const partes = [`Tipo: ${CHORD_LABEL[c.tipo]}`];
-      if (state.config.incluirPos && c.tipo !== "aumentado") partes.push(`Posición: ${c.posicion}`);
-      if (state.config.incluirEst && c.tipo !== "aumentado") partes.push(`Estado: ${c.estado}`);
-      showFeedback("info", "👁 Respuesta: " + partes.join(" · "));
-
-      state.locked = true;
-      state.stats.err++;
-      updateStats();
-      setChoicesDisabled(true);
-      $("submit-hint").textContent = "";
-
-      document.querySelectorAll("#choices-tipo .choice").forEach(b => {
-        if (b.dataset.v === c.tipo) b.classList.add("correct");
-      });
-      if (state.config.incluirPos && c.tipo !== "aumentado") {
-        document.querySelectorAll("#choices-pos .choice").forEach(b => {
-          if (b.dataset.v === c.posicion) b.classList.add("correct");
-        });
-      }
-      if (state.config.incluirEst && c.tipo !== "aumentado") {
-        document.querySelectorAll("#choices-est .choice").forEach(b => {
-          if (b.dataset.v === c.estado) b.classList.add("correct");
-        });
-      }
-
-      showNextButton();
+  }
+  if (state.config.incluirEst && c.tipo !== "aumentado") {
+    document.querySelectorAll("#choices-est .choice").forEach(b => {
+      if (b.dataset.v === c.estado) b.classList.add("correct");
     });
+  }
 
-    // ---------- Enviar respuesta ----------
-    $("btn-submit").addEventListener("click", () => {
-      if (state.locked) return;
-      evaluate();
-    });
+  showNextButton();
+});
 
-    // ---------- Siguiente ----------
-    $("btn-next").addEventListener("click", () => {
-      if (!state.locked) return;
-      state.locked = false;
-      nextChord();
-    });
+// ---------- Enviar respuesta ----------
+$("btn-submit").addEventListener("click", () => {
+  if (state.locked) return;
+  evaluate();
+});
 
-    // ---------- Atajos ----------
-    document.addEventListener("keydown", (e) => {
-      if ($("screen-dictado").classList.contains("hidden")) return;
+// ---------- Siguiente ----------
+$("btn-next").addEventListener("click", () => {
+  if (!state.locked) return;
+  state.locked = false;
+  nextChord();
+});
 
-      if (e.key === "Enter"
-        && $("btn-next").classList.contains("hidden")
-        && !state.locked) {
-        e.preventDefault();
-        $("btn-submit").click();
-        return;
-      }
+// ---------- Atajos ----------
+document.addEventListener("keydown", (e) => {
+  if ($("screen-dictado").classList.contains("hidden")) return;
 
-      if ((e.key === " " || e.key === "Enter")
-        && !$("btn-next").classList.contains("hidden")) {
-        e.preventDefault();
-        $("btn-next").click();
-        return;
-      }
+  if (e.key === "Enter"
+      && $("btn-next").classList.contains("hidden")
+      && !state.locked) {
+    e.preventDefault();
+    $("btn-submit").click();
+    return;
+  }
 
-      if (state.locked) return;
+  if ((e.key === " " || e.key === "Enter")
+      && !$("btn-next").classList.contains("hidden")) {
+    e.preventDefault();
+    $("btn-next").click();
+    return;
+  }
 
-      const key = e.key.toLowerCase();
-      if (key === "r") { $("btn-replay").click(); return; }
+  if (state.locked) return;
 
-      const tipoBtns = [...document.querySelectorAll("#choices-tipo .choice")];
-      if (["1", "2", "3", "4"].includes(key)) {
-        const idx = parseInt(key) - 1;
-        if (tipoBtns[idx]) tipoBtns[idx].click();
-        return;
-      }
+  const key = e.key.toLowerCase();
+  if (key === "r") { $("btn-replay").click(); return; }
 
-      const posMap = { q: "8va", w: "5ta", e: "3ra" };
-      if (posMap[key] && !$("step-pos").classList.contains("hidden")) {
-        const btn = document.querySelector(`#choices-pos .choice[data-v="${posMap[key]}"]`);
-        if (btn) btn.click();
-        return;
-      }
+  const tipoBtns = [...document.querySelectorAll("#choices-tipo .choice")];
+  if (["1","2","3","4"].includes(key)) {
+    const idx = parseInt(key) - 1;
+    if (tipoBtns[idx]) tipoBtns[idx].click();
+    return;
+  }
 
-      const estMap = { a: "Fundamental", s: "6", d: "6/4" };
-      if (estMap[key] && !$("step-est").classList.contains("hidden")) {
-        const btn = document.querySelector(`#choices-est .choice[data-v="${estMap[key]}"]`);
-        if (btn) btn.click();
-        return;
-      }
-    });
-  </script>
+  const posMap = { q: "8va", w: "5ta", e: "3ra" };
+  if (posMap[key] && !$("step-pos").classList.contains("hidden")) {
+    const btn = document.querySelector(`#choices-pos .choice[data-v="${posMap[key]}"]`);
+    if (btn) btn.click();
+    return;
+  }
+
+  const estMap = { a: "Fundamental", s: "6", d: "6/4" };
+  if (estMap[key] && !$("step-est").classList.contains("hidden")) {
+    const btn = document.querySelector(`#choices-est .choice[data-v="${estMap[key]}"]`);
+    if (btn) btn.click();
+    return;
+  }
+});
+</script>
 </body>
-
 </html>

@@ -37,6 +37,29 @@ const PianoSampler = (() => {
     return Tone.Frequency(midi, "midi").toNote();
   }
 
+  /**
+   * Fuerza el desbloqueo del AudioContext (crítico para iOS/Safari).
+   * Debe llamarse dentro de un gesto táctil real (click, touchend, etc.).
+   */
+  async function unlockAudio() {
+    try {
+      if (Tone.context.state !== "running") {
+        await Tone.start();
+      }
+      if (Tone.context.state !== "running") {
+        await Tone.context.resume();
+      }
+      // Reproducir un buffer silencioso de 1 muestra para forzar el desbloqueo
+      const silentBuffer = Tone.context.createBuffer(1, 1, 22050);
+      const source = Tone.context.createBufferSource();
+      source.buffer = silentBuffer;
+      source.connect(Tone.context.destination);
+      source.start(0);
+    } catch (e) {
+      console.warn("[PianoSampler] No se pudo desbloquear el audio:", e);
+    }
+  }
+
   async function init(userConfig = {}) {
     if (initialized) return true;
     if (initPromise) return initPromise;
@@ -44,7 +67,8 @@ const PianoSampler = (() => {
     initPromise = (async () => {
       const cfg = { ...CONFIG, ...userConfig };
 
-      await Tone.start();
+      // Desbloqueo reforzado (especialmente útil en iOS)
+      await unlockAudio();
 
       reverb = new Tone.Reverb({
         decay: cfg.reverbDecay,
@@ -59,6 +83,10 @@ const PianoSampler = (() => {
       }).connect(reverb);
 
       await Tone.loaded();
+
+      // Segundo desbloqueo por si las moscas (iOS puede haberlo suspendido
+      // durante la carga de samples)
+      await unlockAudio();
 
       initialized = true;
       return true;
@@ -119,7 +147,7 @@ const PianoSampler = (() => {
 
   return {
     init, play, playChord, playArpeggio, playSequence,
-    setVolume, dispose, isReady,
+    setVolume, dispose, isReady, unlockAudio,
     get sampler() { return sampler; },
     CONFIG,
   };
